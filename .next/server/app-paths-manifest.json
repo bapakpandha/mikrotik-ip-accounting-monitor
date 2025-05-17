@@ -1,9 +1,8 @@
 {
+  "/_not-found/page": "app/_not-found/page.js",
   "/api/get_current_active_users/route": "app/api/get_current_active_users/route.js",
   "/api/get_list_current_active_users/route": "app/api/get_list_current_active_users/route.js",
   "/api/get_real_time/route": "app/api/get_real_time/route.js",
   "/api/get_total_bandwidth/route": "app/api/get_total_bandwidth/route.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/_not-found/page": "app/_not-found/page.js",
   "/(admin)/page": "app/(admin)/page.js"
 }

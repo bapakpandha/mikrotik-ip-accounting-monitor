@@ -1,9 +1,8 @@
 {
+  "/_not-found/page": "/_not-found",
   "/api/get_current_active_users/route": "/api/get_current_active_users",
   "/api/get_list_current_active_users/route": "/api/get_list_current_active_users",
   "/api/get_real_time/route": "/api/get_real_time",
   "/api/get_total_bandwidth/route": "/api/get_total_bandwidth",
-  "/favicon.ico/route": "/favicon.ico",
-  "/_not-found/page": "/_not-found",
   "/(admin)/page": "/"
 }
