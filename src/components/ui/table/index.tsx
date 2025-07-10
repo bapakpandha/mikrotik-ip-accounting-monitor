@@ -29,6 +29,7 @@ interface TableCellProps {
   children: ReactNode; // Cell content
   isHeader?: boolean; // If true, renders as <th>, otherwise <td>
   className?: string; // Optional className for styling
+  onClick?: () => void; // Optional click handler
 }
 
 // Table Component
@@ -56,8 +57,20 @@ const TableCell: React.FC<TableCellProps> = ({
   children,
   isHeader = false,
   className,
+  onClick,
 }) => {
   const CellTag = isHeader ? "th" : "td";
+  if (onClick) {
+    return (
+      <CellTag
+        className={`cursor-pointer ${className}`}
+        onClick={onClick}
+      >
+        {children}
+      </CellTag>
+    );
+  }
+  // If no onClick, render as a regular cell
   return <CellTag className={` ${className}`}>{children}</CellTag>;
 };
 

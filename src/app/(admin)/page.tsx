@@ -6,7 +6,13 @@ import TableCurrentOnline from "@/components/common/TableCurrentOnline";
 
 export const metadata: Metadata = {
   title:
-    "Mikrotik IP Accounting Monitor",
+    "Mikrotik IP Accounting Monitor - Dashboard",
+  keywords: [
+    "Mikrotik",
+    "IP Accounting",
+    "User Monitoring",
+    "Traffic Monitoring",
+  ],
   description: "Mikrotik IP Accounting Monitor for Monitoring traffic and Online Users",
 };
 
