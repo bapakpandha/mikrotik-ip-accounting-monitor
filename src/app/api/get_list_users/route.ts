@@ -1,81 +1,65 @@
-import { PrismaClient } from 'generated';
-import { NextResponse } from 'next/server';
+import { PrismaClient } from 'generated'
+import { NextResponse } from 'next/server'
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
 
-interface AggregatedBandwidthLog {
-  total_tx_bytes: bigint;
-  total_rx_bytes: bigint;
-  interval_end: Date;
-}
-
-interface RawBandwidthLog {
-  timestamp: Date;
-}
-
-interface User {
-  user_id: number;
-  username: string;
-  aggregated_bandwidth_logs_30min: AggregatedBandwidthLog[];
-  raw_bandwidth_logs: RawBandwidthLog[];
+interface RawResult {
+  user_id: number
+  username: string
+  total_tx: bigint | number
+  total_rx: bigint | number
+  total_traffic: bigint | number
+  last_online: Date | string | null
 }
 
 interface Result {
-  user_id: number;
-  username: string;
-  total_tx: number;
-  total_rx: number;
-  total_traffic: number;
-  last_online: Date | null;
+  user_id: number
+  username: string
+  total_tx: number
+  total_rx: number
+  total_traffic: number
+  last_online: Date | null
 }
 
 export async function GET() {
-  const users = await prisma.users.findMany({
-    select: {
-      user_id: true,
-      username: true,
-      aggregated_bandwidth_logs_30min: {
-        select: {
-          total_tx_bytes: true,
-          total_rx_bytes: true,
-          interval_end: true,
-        }
-      },
-      raw_bandwidth_logs: {
-        select: {
-          timestamp: true,
-        }
-      }
-    }
-  })
+  const raw: RawResult[] = await prisma.$queryRawUnsafe(`
+    SELECT 
+      u.user_id,
+      u.username,
+      agg.total_tx,
+      agg.total_rx,
+      agg.total_traffic,
+      COALESCE(raw.last_raw_timestamp, agg.last_agg_timestamp) AS last_online
+    FROM 
+      users u
+    LEFT JOIN (
+      SELECT 
+        user_id,
+        SUM(total_tx_bytes) AS total_tx,
+        SUM(total_rx_bytes) AS total_rx,
+        SUM(total_tx_bytes + total_rx_bytes) AS total_traffic,
+        MAX(interval_end) AS last_agg_timestamp
+      FROM aggregated_bandwidth_logs_30min
+      GROUP BY user_id
+    ) agg ON u.user_id = agg.user_id
+    LEFT JOIN (
+      SELECT 
+        user_id,
+        MAX(timestamp) AS last_raw_timestamp
+      FROM raw_bandwidth_logs
+      GROUP BY user_id
+    ) raw ON u.user_id = raw.user_id
+    ORDER BY total_traffic DESC
+  `)
 
-  const results: Result[] = users.map((user: User) => {
-    const total_tx = user.aggregated_bandwidth_logs_30min.reduce((acc, log) => acc + Number(log.total_tx_bytes), 0);
-    const total_rx = user.aggregated_bandwidth_logs_30min.reduce((acc, log) => acc + Number(log.total_rx_bytes), 0);
-    const total_traffic = total_tx + total_rx;
+  const result: Result[] = raw.map((row) => ({
+    user_id: row.user_id,
+    username: row.username,
+    total_tx: Number(row.total_tx ?? 0),
+    total_rx: Number(row.total_rx ?? 0),
+    total_traffic: Number(row.total_traffic ?? 0),
+    last_online: row.last_online ? new Date(row.last_online) : null,
+  }))
 
-    const last_raw = user.raw_bandwidth_logs
-      .map(log => log.timestamp)
-      .reduce((latest, ts) => (!latest || ts > latest ? ts : latest), null as Date | null);
-
-    const last_agg = user.aggregated_bandwidth_logs_30min
-      .map(log => log.interval_end)
-      .reduce((latest, ts) => (!latest || ts > latest ? ts : latest), null as Date | null);
-
-    const last_online = last_raw ?? last_agg;
-
-    return {
-      user_id: user.user_id,
-      username: user.username,
-      total_tx,
-      total_rx,
-      total_traffic,
-      last_online,
-    };
-  });
-
-  // Sort by total_traffic descending
-  results.sort((a, b) => b.total_traffic - a.total_traffic)
-
-  return NextResponse.json(results)
+  return NextResponse.json(result)
 }
