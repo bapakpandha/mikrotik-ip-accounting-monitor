@@ -1,9 +1,9 @@
 {
-  "/api/get_current_active_users/route": "app/api/get_current_active_users/route.js",
   "/api/get_list_users/route": "app/api/get_list_users/route.js",
+  "/api/get_current_active_users/route": "app/api/get_current_active_users/route.js",
+  "/api/get_list_current_active_users/route": "app/api/get_list_current_active_users/route.js",
   "/api/test/route": "app/api/test/route.js",
   "/api/get_real_time/route": "app/api/get_real_time/route.js",
-  "/api/get_list_current_active_users/route": "app/api/get_list_current_active_users/route.js",
   "/api/get_total_bandwidth/route": "app/api/get_total_bandwidth/route.js",
   "/_not-found/page": "app/_not-found/page.js",
   "/user-monitoring/page": "app/user-monitoring/page.js",
