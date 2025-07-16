@@ -77,10 +77,8 @@ function formatTimeByScale(date: Date, scale: string, timeZone: string = 'UTC') 
                     const modifiedData = json.data.map((item: DataPoint) => {
 
                         const timeZone = (Intl.DateTimeFormat().resolvedOptions().timeZone) || 'UTC';
-                        const utcTimeWithoutTZ = item.time instanceof Date ? item.time : new Date(item.time);
-                        const localizedTime = fromZonedTime(utcTimeWithoutTZ, 'UTC');
+                        const localizedTime = fromZonedTime(item.time, 'UTC');
 
-                        // Format tampilannya
                         const formatted = formatTimeByScale(localizedTime, scale, timeZone);
 
                         return {
@@ -90,15 +88,6 @@ function formatTimeByScale(date: Date, scale: string, timeZone: string = 'UTC') 
                         };
 
                     });
-
-                    console.log('startDate:', startDate);
-                    console.log('endDate:', endDate);
-                    console.log('now', now);
-                    console.log('fourteenDaysAgo', fourteenDaysAgo);
-                    console.log('startDateIsoString:', new Date(startDate).toISOString());
-                    console.log('endDateIsoString:', new Date(endDate).toISOString());
-                    console.log('startDateString', new Date(startDate).toString());
-                    console.log('endDateString', new Date(endDate).toString());
 
                     setData(modifiedData);
                 } else {

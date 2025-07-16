@@ -80,12 +80,10 @@ export default function UserTableUsage({ user_id = 1 }: { user_id?: number }) {
                 const modifiedData = json.data.map((item: ApiResponseItem, index: number) => {
 
                     const timeZone = (Intl.DateTimeFormat().resolvedOptions().timeZone) || 'UTC';
-                    const utcTimeWithoutTZ = item.time instanceof Date ? item.time : new Date(item.time);
-                    const localizedTime = fromZonedTime(utcTimeWithoutTZ, 'UTC');                
-        
-                    // Format tampilannya
+                    const localizedTime = fromZonedTime(item.time, 'UTC');
+
                     const formatted = formatTimeByScale(localizedTime, scale, timeZone);
-            
+
                     return {
                         nomor: index + 1,
                         time: formatted, // tampilkan waktu lokal sesuai client
