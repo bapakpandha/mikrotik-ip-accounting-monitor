@@ -1,12 +1,12 @@
 {
+  "/_not-found/page": "app/_not-found/page.js",
   "/api/get_current_active_users/route": "app/api/get_current_active_users/route.js",
   "/api/get_list_current_active_users/route": "app/api/get_list_current_active_users/route.js",
-  "/api/get_list_users/route": "app/api/get_list_users/route.js",
-  "/_not-found/page": "app/_not-found/page.js",
-  "/api/test/route": "app/api/test/route.js",
   "/api/get_real_time/route": "app/api/get_real_time/route.js",
-  "/api/get_total_bandwidth/route": "app/api/get_total_bandwidth/route.js",
+  "/api/get_list_users/route": "app/api/get_list_users/route.js",
   "/api/get_user_detail/route": "app/api/get_user_detail/route.js",
+  "/api/test/route": "app/api/test/route.js",
+  "/api/get_total_bandwidth/route": "app/api/get_total_bandwidth/route.js",
   "/user-monitoring/user/[hashed_user_id]/page": "app/user-monitoring/user/[hashed_user_id]/page.js",
   "/user-monitoring/page": "app/user-monitoring/page.js",
   "/(admin)/page": "app/(admin)/page.js"
