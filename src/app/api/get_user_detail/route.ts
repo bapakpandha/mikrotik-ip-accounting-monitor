@@ -153,9 +153,17 @@ async function getTrafficGraph(user_id: number, start: string, end: string, scal
     const startUtc = parseISO(start);
     const endUtc = parseISO(end);
 
+    const formattedStartLocal = format(startUtc, 'yyyy-MM-dd HH:mm:ss');
+    const formattedEndLocal = format(endUtc, 'yyyy-MM-dd HH:mm:ss');
+
+    const startLocal = fromZonedTime(formattedStartLocal, 'UTC');
+    const endLocal = fromZonedTime(formattedEndLocal, 'UTC');
+
+    // V1 BEFORE UPDATE
+
     // Assuming DB stores in local time, and post requests are in UTC, so we need to adjust the dates
-    const startLocal = new Date(startUtc.getTime() + getTimezoneOffset(Intl.DateTimeFormat().resolvedOptions().timeZone));
-    const endLocal = new Date(endUtc.getTime() + getTimezoneOffset(Intl.DateTimeFormat().resolvedOptions().timeZone));
+    // const startLocal = new Date(startUtc.getTime() + getTimezoneOffset(Intl.DateTimeFormat().resolvedOptions().timeZone));
+    // const endLocal = new Date(endUtc.getTime() + getTimezoneOffset(Intl.DateTimeFormat().resolvedOptions().timeZone));
 
     if (isAfter(startLocal, endLocal)) {
         throw new Error('Start date must be before end date');
@@ -192,8 +200,6 @@ async function getTrafficGraph(user_id: number, start: string, end: string, scal
 
         const uploadSum = bucketData.reduce((acc, cur) => acc + Number(cur.total_tx_bytes), 0);
         const downloadSum = bucketData.reduce((acc, cur) => acc + Number(cur.total_rx_bytes), 0);
-
-        console.log(`uploadSum: ${uploadSum}, downloadSum: ${downloadSum} | bucketStart: ${bucketStart.toISOString()}, bucketEnd: ${bucketEnd.toISOString()} | local: ${bucketStart} | format: ${formatTimeByScale(bucketStart, scale)}`);
 
         result.push({
             time: formatTimeByScale(bucketStart, scale),

@@ -86,7 +86,7 @@ export default function UserTableUsage({ user_id = 1 }: { user_id?: number }) {
 
                     return {
                         nomor: index + 1,
-                        time: formatted, // tampilkan waktu lokal sesuai client
+                        time: formatted,
                         upload: item.upload_bytes,
                         download: item.download_bytes,
                         total_traffic: item.upload_bytes + item.download_bytes,
