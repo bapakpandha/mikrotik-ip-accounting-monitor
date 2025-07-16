@@ -1,7 +1,9 @@
 import { PrismaClient, Prisma } from 'generated';
 import { z } from 'zod';
+import prisma from '@/utils/db';
+import { connectDB, disconnectDB } from '@/utils/db';
 
-const prisma = new PrismaClient();
+
 
 const schema = z.object({
   time: z.coerce.number().min(1).default(60),
@@ -40,6 +42,6 @@ export async function POST(req: Request) {
       headers: { 'Content-Type': 'application/json' },
     });
   } finally {
-    await prisma.$disconnect();
+    await disconnectDB();
   }
 }

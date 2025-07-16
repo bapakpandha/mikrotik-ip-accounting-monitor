@@ -14,7 +14,7 @@ interface DataPoint {
     period: string;
 }
 
-export default function StatisticsChart() {
+export default function StatisticsChart({ user_id = 1 }: { user_id?: number }) {
 
     const [data, setData] = React.useState<DataPoint[]>([]);
     const [loading, setLoading] = React.useState(true);
@@ -24,14 +24,14 @@ export default function StatisticsChart() {
             const res = await fetch('/api/get_real_time', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: 1, limit: 18 }),
+                body: JSON.stringify({ user_id, limit: 18 }),
             });
             const result = await res.json();
 
             const formatted = result
                 .map((item: any) => ({
-                    tx_bytes: Number((item.tx_bytes / 1024 / 1024).toFixed(2)), 
-                    rx_bytes: Number((item.rx_bytes / 1024 / 1024).toFixed(2)),
+                    tx_bytes: Number(((item?.tx_bytes ?? 0) / 1024 / 1024).toFixed(2)), 
+                    rx_bytes: Number(((item?.rx_bytes ?? 0) / 1024 / 1024).toFixed(2)),
                     period: item.period,
                 }))
                 .reverse();
@@ -51,14 +51,17 @@ export default function StatisticsChart() {
                 const res = await fetch('/api/get_real_time', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: 1, limit: 1 }),
+                    body: JSON.stringify({ user_id, limit: 1 }),
                 });
                 const result = await res.json();
 
+                const tx = Number(((result[0]?.tx_bytes ?? 0) / 1024 / 1024).toFixed(2));
+                const rx = Number(((result[0]?.rx_bytes ?? 0) / 1024 / 1024).toFixed(2));
+                
                 const newPoint = {
-                    tx_bytes: Number((result[0].tx_bytes / 1024 / 1024).toFixed(2)), 
-                    rx_bytes: Number((result[0].rx_bytes / 1024 / 1024).toFixed(2)),
-                    period: result[0].period,
+                    tx_bytes: isNaN(tx) ? 0 : tx,
+                    rx_bytes: isNaN(rx) ? 0 : rx,
+                    period: result[0]?.period ?? "",
                 };
 
                 setData(prev => [...prev.slice(1), newPoint]);
@@ -68,7 +71,7 @@ export default function StatisticsChart() {
         }, 10000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [user_id]);
 
     const options: ApexOptions = {
         legend: {
@@ -185,14 +188,17 @@ export default function StatisticsChart() {
         },
         yaxis: {
             labels: {
-                formatter: (value: number) => `${value.toFixed(2)} MB`,
+                formatter: (val: number) => {
+                    if (isNaN(val)) return `0 MB`;
+                    return `${val.toFixed(2)} MB`;
+                },
                 style: {
                     fontSize: "12px", // Adjust font size for y-axis labels
                     colors: ["#6B7280"], // Color of the labels
                 },
             },
             title: {
-                text: "", // Remove y-axis title
+                text: "",
                 style: {
                     fontSize: "0px",
                 },
@@ -224,7 +230,7 @@ export default function StatisticsChart() {
             </div>
             <div className="max-w-full overflow-x-auto custom-scrollbar">
                 {loading ? (
-                    <div className="p-4 bg-gray-100 rounded">Loading chart...</div>
+                    <div className="p-4 bg-gray-100 rounded dark:bg-white/[0.03] dark:text-white/90">Loading chart...</div>
                 ) : (
                     <div className="min-w-full">
                         <ReactApexChart

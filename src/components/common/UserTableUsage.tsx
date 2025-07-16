@@ -9,76 +9,108 @@ import {
 } from "../ui/table";
 import React from "react";
 import { formatBytes } from "@/utils/formatBytes";
-import { formatSmartDate } from "@/utils/formatSmartDate";
-import { encodeId } from "@/utils/hashids";
-import Link from "next/link";
-import { usePathname } from 'next/navigation'
+import { formatDateToLocalInput } from "@/components/common/UserTrafficBarChart";
+import { toZonedTime, formatInTimeZone, fromZonedTime } from "date-fns-tz";
 
-// API response from backend
 interface ApiResponseItem {
-    user_id: number;
-    username: string;
-    total_tx: number;
-    total_rx: number;
-    total_traffic: number;
-    last_online: string;
+    upload_bytes: number;
+    download_bytes: number;
+    time: string | Date;
 }
 
-// Local state shape
 interface UserRow {
-    user_id: number;
-    username: string;
+    nomor: number;
+    time: string | Date;
     upload: number;
     download: number;
     total_traffic: number;
-    last_view: Date;
 }
 
-export default function TableUsers() {
+function formatTimeByScale(date: Date, scale: string, timeZone: string = 'UTC') {
+    switch (scale) {
+        case 'hourly':
+            return formatInTimeZone(date, timeZone, 'yyyy-MM-dd HH:00:00');
+        case 'daily':
+            return formatInTimeZone(date, timeZone, 'yyyy-MM-dd');
+        case 'weekly':
+            return formatInTimeZone(date, timeZone, 'yyyy-MM-dd');
+        case 'monthly':
+            return formatInTimeZone(date, timeZone, 'yyyy, MMMM');
+        default:
+            throw new Error(`Unknown scale: ${scale}`);
+    }
+}
+
+export default function UserTableUsage({ user_id = 1 }: { user_id?: number }) {
+    const now = new Date();
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(now.getDate() - 14);
+
     const [data, setData] = React.useState<UserRow[]>([]);
+    const [startDate, setStartDate] = React.useState(formatDateToLocalInput(fourteenDaysAgo));
+    const [endDate, setEndDate] = React.useState(formatDateToLocalInput(now));
+    const [scale, setScale] = React.useState('daily');
     const [loading, setLoading] = React.useState(true);
     const [sortedBy, setSortedBy] = React.useState<keyof UserRow | null>(null);
     const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">(
         "asc"
     );
-
-    const pathname = usePathname(); 
-
     const fetchData = async () => {
+        setLoading(true);
         try {
-            const res = await fetch("/api/get_list_users", {
-                method: "GET",
-                headers: { "Content-Type": "application/json" },
+            const res = await fetch('/api/get_user_detail', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'traffic_graph',
+                    user_id: user_id,
+                    start_time: new Date(startDate).toISOString(),
+                    end_time: new Date(endDate).toISOString(),
+                    scale,
+                }),
             });
+            const json = await res.json();
 
-            const result: ApiResponseItem[] = await res.json();
+            if (!res.ok) {
+                throw new Error(json.message || 'Failed to fetch data');
+            }
 
-            const formatted: UserRow[] = result.map((item) => ({
-                user_id: Number(item.user_id),
-                username: item.username,
-                upload: Number(item.total_tx),
-                download: Number(item.total_rx),
-                total_traffic: Number(item.total_traffic),
-                last_view: new Date(item.last_online),
-            }));
+            if (json.status === 'success') {
 
-            setData(formatted);
+                const modifiedData = json.data.map((item: ApiResponseItem, index: number) => {
+
+                    const timeZone = (Intl.DateTimeFormat().resolvedOptions().timeZone) || 'UTC';
+                    const utcTimeWithoutTZ = item.time instanceof Date ? item.time : new Date(item.time);
+                    const localizedTime = fromZonedTime(utcTimeWithoutTZ, 'UTC');                
+        
+                    // Format tampilannya
+                    const formatted = formatTimeByScale(localizedTime, scale, timeZone);
+            
+                    return {
+                        nomor: index + 1,
+                        time: formatted, // tampilkan waktu lokal sesuai client
+                        upload: item.upload_bytes,
+                        download: item.download_bytes,
+                        total_traffic: item.upload_bytes + item.download_bytes,
+                    };
+                });
+
+                setData(modifiedData);
+
+            } else {
+                console.error(json.message);
+            }
         } catch (error) {
-            console.error("Error fetching data:", error);
+            console.error('Error fetching traffic data:', error);
         } finally {
             setLoading(false);
         }
     };
 
-    // Fetch once + polling
     React.useEffect(() => {
         fetchData();
-
-        const interval = setInterval(fetchData, 120000);
-        return () => clearInterval(interval);
     }, []);
 
-    // Sorting memoized
     const sortedData = React.useMemo(() => {
         if (!sortedBy) return data;
 
@@ -106,15 +138,15 @@ export default function TableUsers() {
         });
     }, [data, sortedBy, sortDirection]);
 
+
     return (
         <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
             <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                        Users
+                        Traffic Table
                     </h3>
                 </div>
-
                 <div className="flex items-center gap-3">
                     <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">
                         <svg
@@ -159,6 +191,54 @@ export default function TableUsers() {
                     </button>
                 </div>
             </div>
+            <form
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    fetchData();
+                }}
+                className="flex flex-wrap items-end gap-4 mb-6"
+            >
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Start Date</label>
+                    <input
+                        type="datetime-local"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="border p-2 rounded w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">End Date</label>
+                    <input
+                        type="datetime-local"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="border p-2 rounded w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Scale</label>
+                    <select
+                        value={scale}
+                        onChange={(e) => setScale(e.target.value)}
+                        className="border p-2 rounded w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                        <option value="hourly">Hourly</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                <div>
+                    <button
+                        type="submit"
+                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                        disabled={loading}
+                    >
+                        {loading ? 'Loading...' : 'Update'}
+                    </button>
+                </div>
+            </form>
             <div className="max-w-full overflow-x-auto">
                 <Table>
                     {/* Table Header */}
@@ -175,13 +255,13 @@ export default function TableUsers() {
                                 className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                                 onClick={() => {
                                     console.log(sortedBy, sortDirection);
-                                    setSortedBy("username");
+                                    setSortedBy("time");
                                     setSortDirection((prev) =>
                                         prev === "asc" ? "desc" : "asc"
                                     );
                                 }}
                             >
-                                Username {sortedBy === "username" && (sortDirection === "asc" ? "↑" : "↓")}
+                                Time {sortedBy === "time" && (sortDirection === "asc" ? "↑" : "↓")}
                             </TableCell>
                             <TableCell
                                 isHeader
@@ -219,19 +299,6 @@ export default function TableUsers() {
                             >
                                 Total Traffic {sortedBy === "total_traffic" && (sortDirection === "asc" ? "↑" : "↓")}
                             </TableCell>
-                            <TableCell
-                                isHeader
-                                className="py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                                onClick={() => {
-                                    console.log(sortedBy, sortDirection);
-                                    setSortedBy("last_view");
-                                    setSortDirection((prev) =>
-                                        prev === "asc" ? "desc" : "asc"
-                                    );
-                                }}
-                            >
-                                Last Seen {sortedBy === "last_view" && (sortDirection === "asc" ? "↑" : "↓")}
-                            </TableCell>
                         </TableRow>
                     </TableHeader>
 
@@ -247,7 +314,9 @@ export default function TableUsers() {
                                     <div className="flex items-center gap-3">
                                         <div>
                                             <p className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                                                <Link href={`${pathname}/user/${encodeId(user.user_id)}`}>{user.username}</Link> 
+                                                {user.time instanceof Date
+                                                    ? user.time.toLocaleString()
+                                                    : user.time}
                                             </p>
                                         </div>
                                     </div>
@@ -261,9 +330,6 @@ export default function TableUsers() {
                                 <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                                     {formatBytes(user.total_traffic)}
                                 </TableCell>
-                                <TableCell className="py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                                    {formatSmartDate(user.last_view)}
-                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -271,4 +337,4 @@ export default function TableUsers() {
             </div>
         </div>
     );
-}
+};

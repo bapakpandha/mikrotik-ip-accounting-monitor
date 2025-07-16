@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function UserMonitoring() {
   return (
     <div>
-      <PageBreadcrumb pageTitle="User Monitoring" />
+      <PageBreadcrumb pageTitle="User Monitoring" breadcrumbs={[{ href: "/", label: "Home" }]} />
       <div className="grid grid-cols-12 gap-4 md:gap-6">
         <div className="col-span-12">
           <TableUsers />
