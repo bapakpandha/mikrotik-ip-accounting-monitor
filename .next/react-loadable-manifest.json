@@ -17,5 +17,12 @@
       "static/chunks/477d4af2.976785371ff1d0f3.js",
       "static/chunks/699.f775322465c62c01.js"
     ]
+  },
+  "components\\common\\UserTrafficBarChart.tsx -> react-apexcharts": {
+    "id": 8699,
+    "files": [
+      "static/chunks/477d4af2.976785371ff1d0f3.js",
+      "static/chunks/699.f775322465c62c01.js"
+    ]
   }
 }

@@ -13,7 +13,16 @@
     }
   ],
   "headers": [],
-  "dynamicRoutes": [],
+  "dynamicRoutes": [
+    {
+      "page": "/user-monitoring/user/[hashed_user_id]",
+      "regex": "^/user\\-monitoring/user/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPhashed_user_id": "nxtPhashed_user_id"
+      },
+      "namedRegex": "^/user\\-monitoring/user/(?<nxtPhashed_user_id>[^/]+?)(?:/)?$"
+    }
+  ],
   "staticRoutes": [
     {
       "page": "/",

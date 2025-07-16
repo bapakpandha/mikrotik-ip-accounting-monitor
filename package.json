@@ -11,6 +11,9 @@
   "dependencies": {
     "@prisma/client": "^6.7.0",
     "apexcharts": "^4.7.0",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
+    "hashids": "^2.3.0",
     "next": "15.3.2",
     "react": "^19.0.0",
     "react-apexcharts": "^1.7.0",
