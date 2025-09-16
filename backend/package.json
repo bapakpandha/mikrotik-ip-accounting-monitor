@@ -1,0 +1,17 @@
+{
+  "name": "mikrotik-scraper-node",
+  "version": "0.1.0",
+  "description": "Mikrotik IP accounting Backend using nodejs",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "NODE_ENV=development nodemon --watch src --exec node --loader ts-node/esm src/index.ts"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "mysql2": "^3.3.0",
+    "dotenv": "^17.2.2"
+  },
+  "author": "bapakpandha",
+  "license": "ISC"
+}
